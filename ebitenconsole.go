@@ -141,9 +141,9 @@ func check() {
 
 		err := Parse(input)
 		if err != nil {
-			result = " ERR: " + err.Error()
+			result = "ERR: " + err.Error()
 		} else {
-			result = " OK"
+			result = "OK"
 		}
 		resultTime = time.Now()
 		stopCatching()
@@ -187,5 +187,5 @@ func String() string {
 		postfix = "_"
 	}
 
-	return " > " + input + postfix
+	return "> " + input + postfix
 }
