@@ -4,7 +4,6 @@
 package ebitenconsole
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -28,18 +27,22 @@ var commands = CmdSet{
 }
 
 func Parse(input string) error {
-	if strings.HasPrefix(input, "set ") {
-		s := strings.SplitN(input[4:], "=", 2)
+	s := strings.SplitN(input, "=", 2)
 
-		if len(s) < 2 {
-			return errors.New("invalid 'set' command. use 'set <variable>=<value>'")
-		}
-
+	// Handle set command
+	if len(s) == 2 {
 		cmd, value := s[0], s[1]
 		return commands.set(cmd, value)
 	}
 
-	return errors.New("invalid command")
+	// Handle single command
+	cmd := input
+	if _, ok := commands.funcs[input]; !ok {
+		return errors.Errorf("no such command '%s'", cmd)
+	}
+
+	// Run command
+	return commands.funcs[input]()
 }
 
 type CmdSet struct {
@@ -70,11 +73,11 @@ type Value interface {
 	Set(string) error
 }
 
+type boolVar bool
+
 func BoolVar(p *bool, name string, description string) {
 	commands.addCmd((*boolVar)(p), name, description)
 }
-
-type boolVar bool
 
 func (b *boolVar) Set(s string) error {
 	v, err := strconv.ParseBool(s)
@@ -111,6 +114,11 @@ func (f *floatVar) Set(s string) error {
 	return nil
 }
 
+func FuncVar(f func() error, name string, description string) {
+	commands.funcs[name] = f
+}
+
+// Input
 var capturingInput bool
 var input string = ""
 var result string
@@ -127,7 +135,6 @@ func CheckInput() {
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
-		fmt.Println("Start catching input")
 		capturingInput = true
 	}
 }
@@ -167,7 +174,6 @@ func check() {
 }
 
 func stopCatching() {
-	fmt.Println("Stop catching input")
 	input = ""
 	capturingInput = false
 }

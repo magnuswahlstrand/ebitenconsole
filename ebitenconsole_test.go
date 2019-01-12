@@ -12,30 +12,53 @@ func Test_Input(t *testing.T) {
 	FloatVar(&someFloat, "f", "float64 value")
 	BoolVar(&toggle, "toggle", "show/hide something")
 
-	Parse("set toggle=true")
+	var testVar bool
+	FuncVar(func() error {
+		testVar = true
+		return nil
+	}, "somefunc", "call a simple func")
+
+	Parse("toggle=true")
 	if toggle != true {
 		t.Fatalf("expected true, got %t\n", toggle)
 	}
 
-	Parse("set toggle=false")
+	Parse("toggle=false")
 	if toggle != false {
 		t.Fatalf("expected true, got %t\n", toggle)
 	}
 
-	Parse("set name=Testman")
+	Parse("name=Testman")
 	if name != "Testman" {
 		t.Fatalf("expected 'Testman', got '%s'\n", name)
 	}
 
-	Parse("set f=0.15")
+	Parse("f=0.15")
 	expected := 0.15
 	if someFloat != expected {
 		t.Fatalf("expected '%f', got '%f'\n", expected, someFloat)
 	}
 
+	//Before
+	if testVar != false {
+		t.Fatalf("expected 'false', got '%t'\n", testVar)
+	}
+
+	Parse("somefunc")
+	//After
+	if testVar != true {
+		t.Fatalf("expected 'true', got '%t'\n", testVar)
+	}
+
 	// Expect errors
-	cmd := "set invalidcmd=Magnus"
+	cmd := "invalidvar=Magnus"
 	if err := Parse(cmd); err == nil {
 		t.Fatalf("expected error from '%s'", cmd)
 	}
+
+	cmd = "invalidfunc"
+	if err := Parse(cmd); err == nil {
+		t.Fatalf("expected error from '%s'", cmd)
+	}
+
 }

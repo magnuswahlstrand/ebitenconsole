@@ -44,14 +44,17 @@ func update(screen *ebiten.Image) error {
 
 	// Add this
 	ebitenconsole.CheckInput()
-	ebitenutil.DebugPrintAt(tmpImg, ebitenconsole.String(), 0, 0)
+	console := ebitenconsole.String()
+	ebitenutil.DebugPrintAt(tmpImg, console, 5, 0)
 
-	ebitenutil.DebugPrintAt(tmpImg, "Press enter and type:\nset color=red\n", 5, 40)
-
+	ebitenutil.DebugPrintAt(tmpImg, `
+Press enter and type:
+- color=red
+- flip=true
+- reset`, 5, 40)
 	ebitenutil.DebugPrintAt(tmpImg, fmt.Sprintf("name: %s\ncolor: %s\nflip: %t\n", name, clr, flip), 5, 140)
 	op := &ebiten.DrawImageOptions{}
 	if flip {
-
 		op.GeoM.Translate(-100, -100)
 		op.GeoM.Rotate(math.Pi)
 		op.GeoM.Translate(100, 100)
@@ -69,6 +72,22 @@ func main() {
 	ebitenconsole.StringVar(&name, "name", "of player")
 	ebitenconsole.StringVar(&clr, "color", "background color")
 	ebitenconsole.BoolVar(&flip, "flip", "show/hide something")
+
+	var i int
+	reset := func() error {
+		if i >= 3 {
+			return errors.New("reset too many times (3)")
+		}
+		name = "Testman"
+		clr = "black"
+		flip = false
+		i++
+		return nil
+	}
+	ebitenconsole.FuncVar(reset, "reset", "reset all state")
+
+	errorfunc := func() error { return errors.New("throws example") }
+	ebitenconsole.FuncVar(errorfunc, "error", "throws error")
 
 	if err := ebiten.Run(update, 200, 200, 2, "ebitenconsole demo"); err != nil {
 		log.Fatal(err)
