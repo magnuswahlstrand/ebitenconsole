@@ -24,6 +24,7 @@ type Cmd struct {
 var commands = CmdSet{
 	Usage:  func() {},
 	values: make(map[string]*Cmd),
+	funcs:  make(map[string]func() error),
 }
 
 func Parse(input string) error {
@@ -31,7 +32,6 @@ func Parse(input string) error {
 		s := strings.SplitN(input[4:], "=", 2)
 
 		if len(s) < 2 {
-			fmt.Println(s)
 			return errors.New("invalid 'set' command. use 'set <variable>=<value>'")
 		}
 
@@ -46,6 +46,7 @@ type CmdSet struct {
 	// Usage is the function called when an error occured or help is entered
 	Usage  func()
 	values map[string]*Cmd
+	funcs  map[string]func() error
 }
 
 func (c *CmdSet) addCmd(v Value, name string, description string) {
@@ -95,8 +96,23 @@ func (s *stringVar) Set(v string) error {
 	return nil
 }
 
+type floatVar float64
+
+func FloatVar(v *float64, name string, description string) {
+	commands.addCmd((*floatVar)(v), name, description)
+}
+
+func (f *floatVar) Set(s string) error {
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return err
+	}
+	*f = floatVar(v)
+	return nil
+}
+
 var capturingInput bool
-var input string = "set name=Magnus"
+var input string = ""
 var result string
 var resultTime time.Time
 
@@ -104,6 +120,10 @@ func CheckInput() {
 	if capturingInput {
 		check()
 		return
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		result = ""
 	}
 
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
@@ -114,6 +134,11 @@ func CheckInput() {
 
 func check() {
 	if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+		if input == "" {
+			stopCatching()
+			return
+		}
+
 		err := Parse(input)
 		if err != nil {
 			result = " ERR: " + err.Error()
@@ -132,8 +157,12 @@ func check() {
 		input += string(r)
 	}
 
-	if ebiten.IsKeyPressed(ebiten.KeyBackspace) && len(input) > 0 {
+	if inpututil.IsKeyJustPressed(ebiten.KeyBackspace) && len(input) > 0 {
 		input = input[:len(input)-1]
+	}
+
+	if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+		input = ""
 	}
 }
 
@@ -154,7 +183,6 @@ func String() string {
 
 	var postfix string
 	ms := time.Now().Nanosecond() / 1e6
-	fmt.Println(ms)
 	if (ms/blinkPeriodMs)%2 == 0 {
 		postfix = "_"
 	}

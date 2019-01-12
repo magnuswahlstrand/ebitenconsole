@@ -27,6 +27,8 @@ func update(screen *ebiten.Image) error {
 	switch clr {
 	case "red":
 		c = colornames.Red
+	case "blue":
+		c = colornames.Blue
 	case "black":
 		c = colornames.Black
 	case "green":
@@ -38,9 +40,12 @@ func update(screen *ebiten.Image) error {
 	}
 	screen.Fill(c)
 
+	// Add this
 	ebitenconsole.CheckInput()
-
 	ebitenutil.DebugPrint(screen, ebitenconsole.String())
+
+	ebitenutil.DebugPrintAt(screen, "Press enter and type:\nset color=red\n", 5, 40)
+
 	ebitenutil.DebugPrintAt(screen, fmt.Sprintf("name: %s\ncolor: %s\ntoggle: %t\n", name, clr, toggle), 5, 140)
 	return nil
 }

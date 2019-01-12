@@ -6,8 +6,10 @@ import (
 
 func Test_Input(t *testing.T) {
 	var toggle bool
+	var someFloat float64
 	var name string
 	StringVar(&name, "name", "of a tester")
+	FloatVar(&someFloat, "f", "float64 value")
 	BoolVar(&toggle, "toggle", "show/hide something")
 
 	Parse("set toggle=true")
@@ -23,6 +25,12 @@ func Test_Input(t *testing.T) {
 	Parse("set name=Testman")
 	if name != "Testman" {
 		t.Fatalf("expected 'Testman', got '%s'\n", name)
+	}
+
+	Parse("set f=0.15")
+	expected := 0.15
+	if someFloat != expected {
+		t.Fatalf("expected '%f', got '%f'\n", expected, someFloat)
 	}
 
 	// Expect errors
